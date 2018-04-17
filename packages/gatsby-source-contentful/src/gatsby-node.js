@@ -115,6 +115,11 @@ exports.sourceNodes = async (
     locales,
   })
 
+
+  // console.warn('******************************')
+  // console.log('******************************')
+  // console.log({resolvable});
+
   // Build foreign reference map before starting to insert any nodes
   const foreignReferenceMap = normalize.buildForeignReferenceMap({
     contentTypeItems,
@@ -168,6 +173,8 @@ exports.sourceNodes = async (
   })
 
   assets.forEach(assetItem => {
+
+    // console.log({assetItem});
     normalize.createAssetNodes({
       assetItem,
       createNode,

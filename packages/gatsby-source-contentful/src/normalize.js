@@ -2,12 +2,13 @@ const _ = require(`lodash`)
 const crypto = require(`crypto`)
 const stringify = require(`json-stringify-safe`)
 const deepMap = require(`deep-map`)
-
+const chalk = require('chalk')
 const digest = str =>
   crypto
     .createHash(`md5`)
     .update(str)
     .digest(`hex`)
+
 const typePrefix = `Contentful`
 const makeTypeName = type => _.upperFirst(_.camelCase(`${typePrefix} ${type}`))
 
@@ -17,6 +18,7 @@ const getLocalizedField = ({ field, defaultLocale, locale }) => {
   } else if (!_.isUndefined(field[locale.fallbackCode])) {
     return field[locale.fallbackCode]
   } else {
+    console.log(chalk.yellow`LOL SAD`);
     return null
   }
 }
@@ -41,6 +43,13 @@ exports.fixId = fixId
 
 exports.fixIds = object => {
   const out = deepMap(object, (v, k) => (k === `id` ? fixId(v) : v))
+
+  // console.log('-----------------------------')
+  // console.log({
+  //   object,
+  //   out
+  // });
+
 
   return {
     ...out,
@@ -102,6 +111,10 @@ exports.buildForeignReferenceMap = ({
         if (entryItemFields[entryItemFieldKey]) {
           let entryItemFieldValue =
             entryItemFields[entryItemFieldKey][defaultLocale]
+
+            console.log({entryItemFieldValue})
+
+
           // If this is an array of single reference object
           // add to the reference map, otherwise ignore.
           if (Array.isArray(entryItemFieldValue)) {
@@ -201,6 +214,7 @@ exports.createContentTypeNodes = ({
   locales,
 }) => {
   const contentTypeItemId = contentTypeItem.name
+
   locales.forEach(locale => {
     const mId = makeMakeId({ currentLocale: locale.code, defaultLocale })
     const getField = makeGetLocalizedField({ locale, defaultLocale })
@@ -209,6 +223,11 @@ exports.createContentTypeNodes = ({
     const conflictFields = []
     contentTypeItem.fields.forEach(contentTypeItemField => {
       const fieldName = contentTypeItemField.id
+        if(fieldName === 'LOL'){
+            console.log(chalk.bgRed`WE HAVE A LOL`)
+            console.log({fieldName});
+            console.log({contentTypeItemField: contentTypeItemField})
+    }
       if (restrictedNodeFields.includes(fieldName)) {
         console.log(
           `Restricted field found for ContentType ${contentTypeItemId} and field ${fieldName}. Prefixing with ${conflictFieldPrefix}.`
@@ -224,6 +243,20 @@ exports.createContentTypeNodes = ({
       // Get localized fields.
       const entryItemFields = _.mapValues(entryItem.fields, v => getField(v))
 
+      if(typeof entryItem.fields.LOL !== 'undefined'){
+      console.log(chalk.red`LOL LOL LOL`)
+      console.log(chalk.red`entryItem`)
+      console.log(entryItem);
+      console.log(chalk.red`tags`)
+      console.log(entryItem.fields.tags)
+      console.log('entryItem.fields.LOL')
+      console.log(entryItem.fields.LOL)
+      console.log(entryItem.fields)
+      console.log(chalk.red`entryItem.fields`)
+      console.log(chalk.red`{entryItemFields: entryItemFields.LOL}` )
+      console.log({entryItemFields: entryItemFields.LOL})
+      console.log('^^^^^^^^^^')
+    }
       // Prefix any conflicting fields
       // https://github.com/gatsbyjs/gatsby/pull/1084#pullrequestreview-41662888
       conflictFields.forEach(conflictField => {
@@ -325,12 +358,41 @@ exports.createContentTypeNodes = ({
           return
         }
 
-        const fieldType = contentTypeItem.fields.find(
-          f =>
-            (restrictedNodeFields.includes(f.id)
-              ? `${conflictFieldPrefix}${f.id}`
-              : f.id) === entryItemFieldKey
-        ).type
+        let fieldType;
+
+        if(entryItemFieldKey === 'imagesAST') {
+            fieldType = { id: 'image',
+            name: 'imagesAST',
+            type: 'Link',
+            localized: true,
+            required: false,
+            disabled: false,
+            omitted: false,
+            linkType: 'Asset'
+          };
+
+
+        }else{
+
+          //console.log("FIELDS, HONEY");
+          console.log(contentTypeItem.fields.tags);
+
+          fieldType = contentTypeItem.fields.find(
+            f =>
+              (restrictedNodeFields.includes(f.id)
+                ? `${conflictFieldPrefix}${f.id}`
+                : f.id) === entryItemFieldKey
+          ).type;
+
+        }
+
+        //console.log(`======= contentTypeItem.fields`, entryItemFields)
+        console.log(`======= fieldType`, fieldType)
+
+
+
+
+
         if (fieldType === `Text`) {
           const textNode = prepareTextNode(
             entryNode,
